@@ -191,4 +191,104 @@
 **Key Lessons:**
 - Knowing the exact exception type thrown by your libraries is critical for error classification. We initially used `IllegalArgumentException` for malformed JSON, but Jackson throws `JacksonException`. This caused poison pills to be retried instead of being sent directly to the DLQ.
 
-**Next Step:** Phase 1 Cleanup: Event Schema Versioning Strategy (TASK-017).
+**Next Step:** MVP Sprint Backend: TASK-020 (Asset Registry & Mock Users) and TASK-021 (Watchlist CRUD API).
+
+---
+
+## Session 6 — 2026-08-01
+
+**Summary:** Completed MVP Backend API Sprint (TASK-020 & TASK-021). Created Asset Registry with real stock data, Mock Users endpoint, full Watchlist CRUD endpoints, global CORS configuration, and fixed ArchUnit & Jackson 3.x namespace compatibility.
+
+**Work Completed:**
+- Created `assets.json` with 50 real US stocks across tech, financials, healthcare, energy, consumer, industrial, and media sectors
+- Built `AssetInfo` record and `AssetRegistry` service to load stock dataset deterministically using `UUID.nameUUIDFromBytes`
+- Built `AssetController` with `GET /api/v1/assets`, `GET /api/v1/assets/{id}`, and `GET /api/v1/assets/search?q=`
+- Built `MockUserController` in `user/infrastructure` returning mock users (`GET /api/v1/users/mock`)
+- Created `WatchlistResponse` DTO to prevent exposing domain aggregate roots over REST
+- Extended `WatchlistRepository` with `findByOwnerId(UserId)` derived query
+- Extended `WatchlistService` and `WatchlistController` with `GET /api/v1/watchlists?ownerId=`, `GET /api/v1/watchlists/{id}`, `DELETE /api/v1/watchlists/{id}`, and `DELETE /api/v1/watchlists/{id}/assets/{assetId}`
+- Configured global CORS in `SecurityConfig` for `http://localhost:3000`
+- Updated ArchUnit `ArchitectureEnforcementTest` to scope rule to application packages
+
+**Files Created:**
+- `src/main/resources/data/assets.json`
+- `marketdata/application/AssetInfo.java`
+- `marketdata/application/AssetRegistry.java`
+- `marketdata/infrastructure/AssetController.java`
+- `user/infrastructure/MockUserController.java`
+- `watchlist/infrastructure/WatchlistResponse.java`
+- `ai/handbook_july26/session6_handbook_mvp_backend.md`
+
+**Files Modified:**
+- `SecurityConfig.java`
+- `watchlist/infrastructure/WatchlistRepository.java`
+- `watchlist/application/WatchlistService.java`
+- `watchlist/infrastructure/WatchlistController.java`
+- `src/test/java/org/workshop/marketcanvas/ArchitectureEnforcementTest.java`
+
+**Key Decisions:**
+- ADR-010: Static Asset Registry Over Live API Integration for MVP
+
+**Key Lessons:**
+- Spring Boot 4.x Jackson 3.x namespace (`tools.jackson`) must be consistently used across all JSON deserialization beans (e.g. `TypeReference`).
+- ArchUnit `layeredArchitecture().consideringOnlyDependenciesInAnyPackage(...)` is required when enforcing bounded context isolation so framework/JDK classes aren't flagged as illegal cross-layer dependencies.
+
+**Next Step:** TASK-022: Build Next.js Frontend (MVP Dashboard).
+
+---
+
+## Session 7 — 2026-08-01
+
+**Summary:** Built full Next.js 14+ Frontend Application, multi-stage Docker containerization for the entire stack, unified `docker-compose.yml`, and an in-app interactive REST API Test Bench.
+
+**Work Completed:**
+- Created Next.js 14+ project in `frontend/` with TypeScript, Tailwind CSS, Lucide icons, and custom Bloomberg-style fintech aesthetic
+- Built typed REST client in `src/lib/api.ts` covering all 10 Spring Boot endpoints
+- Built `UserContext.tsx` providing dynamic mock identity switching (Alice, Bob, Carol) and `localStorage` persistence
+- Built `Navbar.tsx` with live backend connectivity telemetry, user switcher, and quick API tester drawer
+- Built `page.tsx` (Dashboard) with active user portfolio metrics, watchlist card grid, and `CreateWatchlistModal.tsx`
+- Built `watchlists/[id]/page.tsx` with dynamic breadcrumbs, capacity enforcement gauge (10 assets max invariant), and `AssetTable.tsx`
+- Built SVG mini `Sparkline.tsx` and mock pricing simulator for real-time market feels
+- Built `AssetSearchModal.tsx` and `assets/page.tsx` (Market Directory) with live search and sector filtering across the 50 verified US equities
+- Built `EndpointTesterDrawer.tsx` (In-App API Inspector & Test Bench) enabling 1-click execution, latency telemetry, and JSON inspection of all 10 endpoints
+- Created root multi-stage `Dockerfile` (Spring Boot builder + eclipse-temurin runner) and `frontend/Dockerfile` (Node standalone runner)
+- Updated `docker-compose.yml` with dual Kafka listeners (`PLAINTEXT://kafka:9092`, `PLAINTEXT_HOST://localhost:9092`), backend on `:8080`, and frontend on `:3000` with healthchecks
+- Verified Next.js production build (`npm run build`) with static and dynamic App Router routes
+- Verified backend unit and ArchUnit tests (`.\mvnw.cmd test "-Dtest=WatchlistTest,ArchitectureEnforcementTest"`)
+
+**Files Created:**
+- `Dockerfile`
+- `.dockerignore`
+- `frontend/Dockerfile`
+- `frontend/.dockerignore`
+- `frontend/package.json`
+- `frontend/tsconfig.json`
+- `frontend/next.config.mjs`
+- `frontend/postcss.config.mjs`
+- `frontend/tailwind.config.ts`
+- `frontend/src/app/globals.css`
+- `frontend/src/app/layout.tsx`
+- `frontend/src/app/page.tsx`
+- `frontend/src/app/assets/page.tsx`
+- `frontend/src/app/watchlists/[id]/page.tsx`
+- `frontend/src/types/index.ts`
+- `frontend/src/lib/api.ts`
+- `frontend/src/lib/mockPrices.ts`
+- `frontend/src/context/UserContext.tsx`
+- `frontend/src/components/layout/Navbar.tsx`
+- `frontend/src/components/user/UserSwitcher.tsx`
+- `frontend/src/components/watchlist/Sparkline.tsx`
+- `frontend/src/components/watchlist/WatchlistCard.tsx`
+- `frontend/src/components/watchlist/AssetTable.tsx`
+- `frontend/src/components/watchlist/CreateWatchlistModal.tsx`
+- `frontend/src/components/watchlist/AssetSearchModal.tsx`
+- `frontend/src/components/api-inspector/EndpointTesterDrawer.tsx`
+
+**Files Modified:**
+- `docker-compose.yml`
+- `ai/TASKS.md`
+- `ai/CURRENT_STATE.md`
+- `ai/SESSION_LOG.md`
+
+**Next Step:** Ready for TASK-017 (Real Stock Market Data Ingestion with Finnhub/Yahoo fallback, 2–3 daily snapshot scheduler, and Kafka `platform.marketdata.prices` publishing).
+

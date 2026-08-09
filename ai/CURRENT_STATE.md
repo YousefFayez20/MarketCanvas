@@ -1,7 +1,7 @@
 # Current State — MarketCanvas
 
-> **Last updated:** 2026-07-25
-> **Updated by:** Senior Staff Engineer (AI Review Session)
+> **Last updated:** 2026-08-01
+> **Updated by:** Senior Staff Engineer
 
 ## Current Branch
 
@@ -9,7 +9,7 @@
 
 ## Architecture Stage
 
-**Stage 2 In Progress** — Event-Driven Modular Monolith (Backend complete, building Full-Stack MVP)
+**Stage 2 In Progress** — Event-Driven Modular Monolith (Backend CRUD & Asset Registry complete, building Next.js Frontend)
 
 ## Implemented Features
 
@@ -21,18 +21,27 @@
 | Shared Kernel value objects | ✅ | `UserId`, `AssetId` as Java records with null validation |
 | Watchlist Aggregate Root | ✅ | JPA Entity. Factory method, business invariants (max 10 assets, name validation), domain events |
 | Watchlist JPA Entity | ✅ | `@Entity`, `@ElementCollection` for assets, `AttributeConverter`s for value objects |
-| Watchlist REST API | ✅ | `POST /api/v1/watchlists`, `POST /api/v1/watchlists/{id}/assets` |
-| Watchlist Application Service | ✅ | `WatchlistService` orchestrates use cases with `@Transactional` |
-| ArchUnit enforcement tests | ✅ | Cross-module dependency violations cause test failure |
+| Watchlist REST API | ✅ | Full CRUD: `POST /api/v1/watchlists`, `GET /api/v1/watchlists?ownerId=`, `GET /api/v1/watchlists/{id}`, `DELETE /api/v1/watchlists/{id}`, `POST /api/v1/watchlists/{id}/assets`, `DELETE /api/v1/watchlists/{id}/assets/{assetId}` |
+| Watchlist Application Service | ✅ | `WatchlistService` orchestrates use cases with `@Transactional` / `@Transactional(readOnly=true)` |
+| WatchlistResponse DTO | ✅ | `WatchlistResponse` record decouples domain aggregate from REST wire format |
+| Asset Registry Service | ✅ | Loads 50 real US stocks from classpath `data/assets.json` with deterministic UUIDs |
+| Asset REST API | ✅ | `GET /api/v1/assets`, `GET /api/v1/assets/{id}`, `GET /api/v1/assets/search?q=` |
+| Mock User REST API | ✅ | `GET /api/v1/users/mock` in `user/infrastructure` |
+| Next.js Frontend Dashboard | ✅ | Next.js 14+ App Router, Tailwind dark terminal theme, User Switcher (Alice, Bob, Carol) |
+| Watchlist Management UI | ✅ | Dashboard grid, Create Watchlist modal, Watchlist detail view with capacity bar (10 max) |
+| Asset Search & Directory UI | ✅ | Debounced search across 50 US stocks, Sector filters, "+ Add to Watchlist" action |
+| Interactive REST API Test Bench | ✅ | In-app drawer with 1-click test suite for all 10 endpoints, latency, and JSON payload viewer |
+| Multi-Stage Containerization | ✅ | Root Spring Boot `Dockerfile` + Next.js standalone `frontend/Dockerfile` |
+| Unified Docker Compose | ✅ | PostgreSQL (5433), Kafka KRaft (9092), Spring Boot Backend (8080), Next.js Frontend (3000) |
+| ArchUnit enforcement tests | ✅ | Scoped to application packages; cross-module dependency violations fail test |
 | Outbox Event entity | ✅ | JPA entity with Lombok, `processed` flag, timestamps |
 | Outbox Event Repository | ✅ | `findTop100ByProcessedFalseOrderByCreatedAt()` |
 | Outbox Relay (Publisher) | ✅ | `@Scheduled(fixedDelay=5000)`, blocking `.get()` on Kafka send, envelope wrapping |
 | WatchlistOutboxListener | ✅ | `@TransactionalEventListener(BEFORE_COMMIT)`, serializes to Outbox |
-| Kafka Consumer | ✅ | Idempotent via `ProcessedEvent` table, two-tier exception handling, envelope parsing |
-| Docker Compose | ✅ | Kafka (KRaft) + PostgreSQL 16 with named volume. DB on port **5433** (avoids native PG conflict) |
+| Kafka Consumer | ✅ | Idempotent via `ProcessedEvent` table, envelope parsing |
 | Application config | ✅ | `application.yml` with JPA, Kafka, `open-in-view: false` |
 | `@EnableScheduling` | ✅ | Added to `MarketCanvasApplication` |
-| SecurityConfig | ✅ | Permits `/api/**`, CSRF disabled for REST. Development-only config. |
+| SecurityConfig & CORS | ✅ | Permits `/api/**`, global CORS enabled for `http://localhost:3000` |
 | JPA AttributeConverters | ✅ | `UserIdConverter`, `AssetIdConverter` with `autoApply = true` |
 | Kafka Error Handling & DLQ | ✅ | `DefaultErrorHandler`, fixed backoff, direct routing to DLQ for `JacksonException` |
 | Topic Constants | ✅ | Centralized `KafkaTopics.java` used across producers and consumers |
@@ -41,7 +50,7 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| MVP Sprint: Full-Stack Watchlist App | 🔄 Planning | TASK-020 (Asset Registry), TASK-021 (CRUD API), TASK-022 (Next.js Frontend) |
+| TASK-017: Real Market Data Ingestion & Snapshot Producer | 🔄 In Progress | Implementing pluggable providers (Finnhub + Yahoo fallback), daily 2-3 snapshots scheduler, Kafka `platform.marketdata.prices` publishing, and Next.js live market integration |
 
 ## Known Bugs
 

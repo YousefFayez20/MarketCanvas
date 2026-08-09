@@ -22,6 +22,12 @@ As we integrated Kafka, we recognized the need for exactly-once processing seman
 **Milestone 4: JPA Entity Mapping, REST API & End-to-End Verification (2026-07-12)**
 We transformed the `Watchlist` aggregate into a full JPA entity with `@ElementCollection` for the asset set, and created `AttributeConverter`s (`UserIdConverter`, `AssetIdConverter`) to bridge our Value Object records with PostgreSQL UUIDs. We built the Application Service (`WatchlistService`) and REST Controller (`WatchlistController`) layers. We also added a `SecurityConfig` to permit `/api/**` access during development. After resolving a PostgreSQL port conflict (native Windows PG on 5432, Docker remapped to 5433) and fixing the Kafka dependency (`spring-kafka` → `spring-boot-starter-kafka` for auto-configuration in Spring Boot 4.x), we successfully ran the **first end-to-end test**: `curl → REST API → Aggregate → Outbox → Kafka → Consumer → ProcessedEvent`. This milestone marks the completion of the foundational Event-Driven Architecture.
 
+**Milestone 5: Full-Stack MVP Terminal & Multi-Stage Docker Orchestration (2026-08-01)**
+We built the complete Next.js 14+ frontend application featuring a dark Bloomberg-terminal theme, dynamic User Switcher (Alice, Bob, Carol), Watchlist Manager with capacity enforcement (10 max assets for free tier), Asset Directory with live search across 50 verified US equities, and an in-app interactive REST API Test Bench (`EndpointTesterDrawer`). Multi-stage Dockerfiles were engineered for both Spring Boot and Next.js, and `docker-compose.yml` was unified to spin up all 4 services (PostgreSQL 5433, Kafka 9092, Backend 8080, Frontend 3000) with a single command.
+
+**Milestone 6: Real Market Data Ingestion & 2-3 Daily Snapshot Strategy (Current)**
+We transitioned from static mock asset pricing to an authentic, event-driven market data pipeline. Tailored for active and long-term thesis investors rather than noisy day traders, the system captures **2–3 high-fidelity daily snapshots** (Market Open 09:35, Midday 13:00, Market Close 16:05 EST) plus an on-demand manual trigger. A pluggable adapter interface (`MarketDataProvider`) connects to Finnhub.io (60 req/min free tier) with zero-config fallback to Yahoo Finance REST. Market snapshots are cached in PostgreSQL (`asset_quotes`) and broadcast via Kafka topic `platform.marketdata.prices` to power real-time valuations and prepare for cold storage event archiving (MinIO / S3).
+
 ---
 
 ## 2. Complete Feature Inventory

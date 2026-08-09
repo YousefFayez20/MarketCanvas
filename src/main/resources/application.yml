@@ -34,3 +34,20 @@ spring:
         format_sql: true
 
     open-in-view: false
+resilience4j:
+  circuitbreaker:
+    instances:
+      finnhub:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  ratelimiter:
+    instances:
+      finnhub:
+        limit-for-period: 50
+        limit-refresh-period: 60s
+        timeout-duration: 500ms
+

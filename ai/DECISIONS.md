@@ -192,3 +192,75 @@
 - ❌ Requires a separate consumer or manual process to inspect and replay the DLQ
 
 **Future Impact:** We can build tooling later to replay messages from the DLQ once the underlying bugs are fixed.
+
+---
+
+## ADR-010: Static Asset Registry Over Live API Integration for MVP
+
+**Date:** 2026-08-01  
+**Status:** Active  
+
+**Decision:** Serve asset search requests in the MVP from an in-memory `AssetRegistry` loaded from a static classpath JSON file (`/data/assets.json`) with deterministic name-based UUIDs.
+
+**Reason:**
+- The MVP priority is to establish and validate the end-to-end full-stack user experience without external API key or network dependencies.
+- Static dataset provides instant response times, predictable offline testing, and zero rate-limit constraints.
+- Deterministic UUIDs (`UUID.nameUUIDFromBytes`) ensure identical ticker identity across server restarts.
+
+**Alternatives Considered:**
+- Direct integration with free financial APIs (Alpha Vantage / Financial Modeling Prep) — rejected for MVP (requires API keys, rate-limited, external failure domain).
+- Database seeded `assets` table — rejected for MVP (unnecessary ORM complexity before data requirements are finalized).
+
+**Trade-offs:**
+- ✅ Zero external latency, works offline, clean REST contract (`GET /api/v1/assets/search?q=`).
+- ❌ Dataset limited to pre-configured ~50 stocks (no real-time quote feeds yet).
+
+**Future Impact:** The REST API contract stays identical when we swap the underlying data provider to a live market data API in future phases.
+
+---
+
+## ADR-011: Next.js 14+ App Router for Frontend Terminal
+
+**Date:** 2026-08-01  
+**Status:** Active  
+
+**Decision:** Use Next.js 14+ App Router with TypeScript and Tailwind CSS for the MarketCanvas user interface.
+
+**Reason:**
+- Modern component-driven terminal aesthetic suitable for financial data density.
+- Native TypeScript integration guarantees alignment with backend DTOs.
+- Standalone multi-stage Docker build produces a compact, production-ready container image.
+
+---
+
+## ADR-012: In-App Interactive API Test Bench & Inspector Drawer
+
+**Date:** 2026-08-01  
+**Status:** Active  
+
+**Decision:** Embed an interactive API Diagnostic Drawer (`EndpointTesterDrawer`) directly inside the frontend navigation.
+
+**Reason:**
+- Eliminates context-switching to external tools (Postman, cURL) during rapid prototyping and evaluation.
+- Provides immediate 1-click verification of all backend REST endpoints with live latency metrics (ms) and JSON payload inspection.
+
+---
+
+## ADR-013: 2–3 Daily Snapshots Strategy & Pluggable Market Data Adapter
+
+**Date:** 2026-08-01  
+**Status:** Active  
+
+**Decision:** Implement real stock market data ingestion using a **2–3 Daily Snapshot Strategy** (Market Open ~09:35, Midday ~13:00, Market Close ~16:05 EST + on-demand manual refresh) powered by a **Pluggable Adapter (`MarketDataProvider`)** with **Finnhub.io** (Primary, 60 req/min free tier) and **Yahoo Finance Public REST** (Zero-config fallback).
+
+**Reason:**
+- MarketCanvas is designed for active and long-term thesis-driven investors and AI research observers, NOT high-frequency day traders. Sub-minute tick streaming adds massive operational cost, complexity, and rate-limit exhaustion without improving investment thesis quality.
+- 2–3 high-fidelity daily snapshots capture market open reactions, midday trends, and market close valuations perfectly.
+- Pluggable adapter architecture ensures the system works out-of-the-box without requiring users to immediately enter an API key, while allowing full upgrade to dedicated API tokens without changing code.
+- Publishing snapshot events (`StockPriceUpdatedEvent`) to Kafka decouples market ingestion from downstream valuation services, PostgreSQL caching, and cold-storage event archiving (MinIO / S3).
+
+**Trade-offs:**
+- ✅ Zero cost on free tiers, zero rate-limit 429 errors, reliable data for AI RAG reasoning.
+- ❌ Not suitable for day trading or second-by-second order execution (which is explicitly outside MarketCanvas's product scope).
+
+**Future Impact:** Foundation for Kafka Connect S3 event archiving and SEC 10-K RAG context enrichment in Phase 2.

@@ -9,13 +9,13 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 public class ArchitectureEnforcementTest {
     @ArchTest
     static final ArchRule moduleShouldBeIndependent = layeredArchitecture()
-            .consideringAllDependencies()
+            .consideringOnlyDependenciesInAnyPackage("org.workshop.marketcanvas..")
             .layer("User").definedBy("..user..")
-        .layer("Watchlist").definedBy("..watchlist..")
-        .layer("MarketData").definedBy("..marketdata..")
-        .layer("SharedKernel").definedBy("..sharedkernel..")
-        .whereLayer("Watchlist").mayOnlyAccessLayers("SharedKernel")
-        .whereLayer("User").mayOnlyAccessLayers("SharedKernel")
-        .whereLayer("MarketData").mayOnlyAccessLayers("SharedKernel").withOptionalLayers(true);;
+            .layer("Watchlist").definedBy("..watchlist..")
+            .layer("MarketData").definedBy("..marketdata..")
+            .layer("SharedKernel").definedBy("..sharedkernel..")
+            .whereLayer("Watchlist").mayOnlyAccessLayers("SharedKernel")
+            .whereLayer("User").mayOnlyAccessLayers("SharedKernel")
+            .whereLayer("MarketData").mayOnlyAccessLayers("SharedKernel").withOptionalLayers(true);
 
 }

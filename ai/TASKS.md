@@ -1,7 +1,7 @@
 # Task Board — MarketCanvas
 
 > Living task board. Update after every session.  
-> **Last updated:** 2026-07-25
+> **Last updated:** 2026-08-01
 
 ---
 
@@ -19,39 +19,47 @@
 
 ## 📋 Todo
 
-### TASK-020: Asset Registry + Mock Users (Backend)
+### TASK-017: Real Market Data Ingestion & Snapshot Producer (Kafka)
 - **Priority:** 🔴 HIGH
-- **Dependencies:** None
-- **Notes:** Create `AssetRegistry` service with ~50 real US stocks from a static JSON file. Expose via `GET /api/v1/assets/search?q=`. Create `MockUserController` with 3-4 demo users at `GET /api/v1/users/mock`.
-
-### TASK-021: Complete Watchlist CRUD API (Backend)
-- **Priority:** 🔴 HIGH
-- **Dependencies:** None
-- **Notes:** Add GET (list, detail), DELETE (watchlist, asset) endpoints. Add `WatchlistResponse` DTO. Add CORS for localhost:3000. Add `findByOwnerId` to repository.
-
-### TASK-022: Next.js Frontend (MVP Dashboard)
-- **Priority:** 🔴 HIGH
-- **Dependencies:** TASK-020, TASK-021
-- **Notes:** Build Next.js app with Dashboard (user selector, watchlist list, create) and Watchlist Detail (asset search, add/remove). Dark theme, real stock tickers.
-
-### TASK-017: Market Data Ingestion Producer
-- **Priority:** 🟡 MEDIUM
-- **Dependencies:** TASK-022 (MVP Sprint gate)
-- **Notes:** As per PDF Month 3-4, Market Data must act as a producer. Implement a scheduled job that fetches mock prices and publishes `PriceUpdated` events to Kafka.
+- **Dependencies:** None (MVP Sprint gate completed)
+- **Description:** Implement a real market data ingestion pipeline with pluggable providers (Finnhub.io primary with 60 req/min free tier + Yahoo Finance public fallback) and a daily snapshot scheduler (2-3 daily snapshots: Market Open 09:35, Midday 13:00, Market Close 16:05 EST + on-demand manual refresh trigger).
+- **Subtasks:**
+  - [ ] Implement `MarketDataProvider` port interface (`fetchQuote`, `fetchBatchQuotes`).
+  - [ ] Build `FinnhubMarketDataProvider` adapter using Spring `RestClient` with safe rate-limiting.
+  - [ ] Build `YahooFinanceMarketDataProvider` zero-config fallback adapter.
+  - [ ] Create `AssetQuoteEntity` and `AssetQuoteRepository` for PostgreSQL real-time snapshot caching.
+  - [ ] Build `ResilientMarketDataService` orchestrator with concurrent in-memory caching.
+  - [ ] Create `StockPriceUpdatedEvent` in `sharedkernel` domain events.
+  - [ ] Build `MarketDataSnapshotScheduler` (`@Scheduled` cron snapshots + dev interval).
+  - [ ] Publish `StockPriceUpdatedEvent` messages to Kafka topic `platform.marketdata.prices`.
+  - [ ] Create `MarketDataController` REST endpoints (`GET /api/v1/marketdata/quotes/{ticker}`, `GET /api/v1/marketdata/quotes`, `POST /api/v1/marketdata/refresh`).
+  - [ ] Connect Next.js frontend to display real stock prices, 24h delta %, and manual sync button.
 
 ### TASK-018: Event Schema Design (Avro / JSON Schema)
 - **Priority:** 🟡 MEDIUM
-- **Dependencies:** None
-- **Notes:** As per PDF Month 3-4, we need formal schema design. Introduce Confluent Schema Registry to docker-compose and migrate `StringSerializer` to `KafkaAvroSerializer` or `KafkaJsonSchemaSerializer`.
+- **Dependencies:** TASK-017
+- **Notes:** Introduce Confluent Schema Registry to docker-compose and migrate `StringSerializer` to `KafkaAvroSerializer` or `KafkaJsonSchemaSerializer` for `WatchlistItemAddedEvent` and `StockPriceUpdatedEvent`.
 
-### TASK-019: Kafka Connect to S3 (Archive)
+### TASK-019: Kafka Connect to S3 / MinIO (Event Archive)
 - **Priority:** 🟡 MEDIUM
-- **Dependencies:** None
-- **Notes:** As per PDF Month 3-4, set up Kafka Connect in docker-compose with an S3 sink connector (use MinIO locally) to archive all domain events for the cold storage tier.
+- **Dependencies:** TASK-017
+- **Notes:** Set up Kafka Connect in docker-compose with an S3 sink connector (MinIO locally) to archive all domain events and price snapshots for cold storage and AI RAG analysis.
 
 ---
 
 ## ✅ Completed
+
+### TASK-022: Next.js Frontend & Full-Stack Docker Orchestration
+- **Completed:** 2026-08-01 (Session 7)
+- **Notes:** Built Next.js 14+ App Router dashboard with dark Bloomberg/fintech theme, User Switcher (Alice, Bob, Carol), Watchlist Manager with CRUD and capacity enforcement (10 max), real Asset Search & Directory across 50 US equities, live financial sparklines, interactive REST API Test Bench (testing all 10 endpoints), multi-stage Dockerfiles for backend & frontend, and updated `docker-compose.yml` for unified 4-service container orchestration.
+
+### TASK-020: Asset Registry + Mock Users (Backend)
+- **Completed:** 2026-08-01 (Session 6)
+- **Notes:** Created `AssetRegistry` service with 50 real US stocks from a static JSON file. Exposed via `GET /api/v1/assets/search?q=`, `GET /api/v1/assets/{id}`, and `GET /api/v1/assets`. Created `MockUserController` with 3 demo users at `GET /api/v1/users/mock`.
+
+### TASK-021: Complete Watchlist CRUD API (Backend)
+- **Completed:** 2026-08-01 (Session 6)
+- **Notes:** Added GET (list by owner, get by id), DELETE (watchlist, asset) endpoints. Added `WatchlistResponse` DTO. Added global CORS for localhost:3000 in `SecurityConfig`. Added `findByOwnerId` to `WatchlistRepository`.
 
 ### TASK-015: Dead Letter Queue (DLQ)
 - **Completed:** 2026-07-25

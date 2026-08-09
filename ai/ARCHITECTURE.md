@@ -136,10 +136,12 @@ Rule: MarketData → may only access → SharedKernel
 |-------|-------------|---------|
 | `outbox_events` | SharedKernel | Transactional Outbox for event publishing |
 | `processed_events` | MarketData | Idempotency tracking for Kafka consumers |
-| *(Watchlist tables)* | Watchlist | Stores watchlists and their contained assets |
+| `watchlists` / `watchlist_assets` | Watchlist | Stores watchlists and their contained asset IDs |
+| `asset_quotes` | MarketData | Real-time / latest snapshot quotes cache (price, change, high, low, volume) |
+| `asset_price_history` | MarketData | Historical snapshot records (EOD / intraday checkpoints) |
 
 ### Database: PostgreSQL 16
-- Host: `localhost:5432`
+- Host: `localhost:5433` (Docker mapped port; 5432 is reserved for native Windows PG)
 - Database: `investment_platform`
 - User: `postgres` / `postgres`
 
@@ -149,14 +151,48 @@ Rule: MarketData → may only access → SharedKernel
 |-------|--------------|-----------|-----------|-----------|
 | `platform.watchlist.events` | `aggregateId` (watchlistId) | Default | OutboxRelay | WatchlistEventConsumer |
 | `platform.watchlist.events.dlq` | `partition` | 7 days | DeadLetterPublishingRecoverer | Ops monitoring |
+| `platform.marketdata.prices` | `ticker` (e.g., AAPL) | 30 days | MarketDataSnapshotScheduler / ResilientMarketDataService | WatchlistValuationConsumer, S3 Archive, Read Caches |
+| `platform.marketdata.snapshots` | `snapshotId` | 30 days | MarketDataSnapshotScheduler | Ops, Audit & AI Ingestion Pipelines |
 
-## Authentication & Authorization
+## Market Data Ingestion Pipeline (2-3 Snapshots/Day)
 
-**Not yet implemented.** Planned: OAuth2 + OIDC (Google/Apple/Microsoft), JWT with short expiry, RBAC roles (FREE_USER, PRO_USER, TEAM_ADMIN, PLATFORM_ADMIN).
+```
+1. MarketDataSnapshotScheduler triggers via Cron (09:35, 13:00, 16:05 EST) or manual POST /api/v1/marketdata/refresh
+2. ResilientMarketDataProvider queries Finnhub.io (or Yahoo Finance fallback if no token)
+3. Quotes are normalized into StockQuote domain records
+4. Persisted into asset_quotes and asset_price_history tables
+5. StockPriceUpdatedEvent published to Kafka topic: platform.marketdata.prices
+6. In-memory read cache updated for sub-millisecond REST queries
+7. Downstream consumers update portfolio valuations and event archives
+```
+
+## REST API Endpoints
+
+| Context | Endpoint | Method | Purpose |
+|---------|----------|--------|---------|
+| `watchlist` | `/api/v1/watchlists` | `POST` | Create a new watchlist (returns 201 + UUID) |
+| `watchlist` | `/api/v1/watchlists?ownerId={ownerId}` | `GET` | List all watchlists owned by a user |
+| `watchlist` | `/api/v1/watchlists/{id}` | `GET` | Get watchlist details and asset IDs |
+| `watchlist` | `/api/v1/watchlists/{id}` | `DELETE` | Delete a watchlist (returns 204) |
+| `watchlist` | `/api/v1/watchlists/{id}/assets` | `POST` | Add an asset to a watchlist |
+| `watchlist` | `/api/v1/watchlists/{id}/assets/{assetId}` | `DELETE` | Remove an asset from a watchlist (returns 204) |
+| `marketdata` | `/api/v1/assets/search?q={query}` | `GET` | Search 50 real US stocks by ticker or name |
+| `marketdata` | `/api/v1/assets/{id}` | `GET` | Get asset metadata by ID |
+| `marketdata` | `/api/v1/assets` | `GET` | Get all available assets in registry |
+| `marketdata` | `/api/v1/marketdata/quotes/{ticker}` | `GET` | Get authentic live/latest stock quote |
+| `marketdata` | `/api/v1/marketdata/quotes?tickers={list}` | `GET` | Batch fetch authentic stock quotes |
+| `marketdata` | `/api/v1/marketdata/refresh` | `POST` | Trigger immediate snapshot ingestion |
+| `marketdata` | `/api/v1/marketdata/status` | `GET` | Check data provider status and last snapshot time |
+| `user` | `/api/v1/users/mock` | `GET` | Get demo users (Alice, Bob, Carol) |
+
+## Security & CORS
+
+- `/api/**` endpoints permitted without auth (development configuration).
+- Global CORS configured in `SecurityConfig` allowing `http://localhost:3000` with `GET`, `POST`, `DELETE`, `OPTIONS`.
 
 ## Frontend
 
-**Not yet started.** Planned: Next.js.
+**In Progress.** Next.js App Router project under `frontend/` connecting to REST APIs.
 
 ## Deployment
 

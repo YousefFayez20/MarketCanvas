@@ -34,19 +34,22 @@
 - [x] Dead Letter Queue (DLQ) for failed messages
 - [x] Kafka topic constants class
 
-### MVP Sprint: Full-Stack Watchlist App 🔄 IN PROGRESS
+### MVP Sprint: Full-Stack Watchlist App ✅ COMPLETE
+- [x] **Complete Watchlist CRUD API** (GET, DELETE endpoints, response DTOs, CORS)
+- [x] **Asset Registry** (static list of 50 real US stocks served via search endpoint)
+- [x] **Mock User Registry** (3 demo users: Alice, Bob, Carol served via API)
+- [x] **Next.js Frontend** (Dashboard, Watchlist Detail, Market Directory, In-App API Test Bench)
+- [x] **End-to-end verification through UI** (create watchlist, search/add/remove real assets, capacity enforcement)
+- [x] **Unified Multi-stage Docker Compose** (PostgreSQL, Kafka KRaft, Spring Boot backend, Next.js frontend)
 
-- [ ] **Complete Watchlist CRUD API** (GET, DELETE endpoints, response DTOs, CORS)
-- [ ] **Asset Registry** (static list of ~50 real US stocks served via search endpoint)
-- [ ] **Mock User Registry** (3-4 demo users served via API)
-- [ ] **Next.js Frontend** (Dashboard + Watchlist Detail pages)
-- [ ] **End-to-end verification through UI** (create watchlist, search/add/remove real assets)
-
-### Month 3–4 Remaining: Advanced Kafka Infrastructure
-
-- [ ] **Implement Market Data ingestion as a Kafka producer** (Publish `PriceUpdated` events)
-- [ ] **Event schema design with Avro or JSON Schema** (Add Schema Registry)
-- [ ] **Set up Kafka Connect to archive events to S3** (MinIO for local dev)
+### Month 3–4 Remaining: Advanced Kafka Infrastructure 🔄 IN PROGRESS
+- [ ] **Real Market Data Ingestion & Snapshot Producer** (TASK-017)
+  - Pluggable provider adapter: Finnhub.io (60 req/min) + Yahoo Finance fallback
+  - 2–3 daily high-fidelity snapshots (Market Open 09:35, Midday 13:00, Close 16:05 EST + manual trigger)
+  - Ingest, cache in PostgreSQL (`asset_quotes`), and publish `StockPriceUpdatedEvent` to `platform.marketdata.prices`
+  - Next.js UI integration with real stock metrics and live sync trigger
+- [ ] **Event schema design with Avro / Schema Registry** (TASK-018)
+- [ ] **Set up Kafka Connect to archive events to S3 / MinIO** (TASK-019)
 
 ---
 
