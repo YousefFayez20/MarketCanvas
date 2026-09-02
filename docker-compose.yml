@@ -54,6 +54,12 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_REPOSITORIES_ENABLED: "false"
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      SPRING_AI_GOOGLE_GENAI_API_KEY: ${GEMINI_API_KEY}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,6 +78,25 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:8080
     depends_on:
       - backend
+  redis:
+    image: redis:7-alpine
+    container_name: marketcanvas-redis
+    restart: unless-stopped
+    ports:
+      - "16379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres-data:
+  redis-data:

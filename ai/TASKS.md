@@ -1,7 +1,7 @@
 # Task Board — MarketCanvas
 
 > Living task board. Update after every session.  
-> **Last updated:** 2026-08-01
+> **Last updated:** 2026-08-15
 
 ---
 
@@ -24,16 +24,16 @@
 - **Dependencies:** None (MVP Sprint gate completed)
 - **Description:** Implement a real market data ingestion pipeline with pluggable providers (Finnhub.io primary with 60 req/min free tier + Yahoo Finance public fallback) and a daily snapshot scheduler (2-3 daily snapshots: Market Open 09:35, Midday 13:00, Market Close 16:05 EST + on-demand manual refresh trigger).
 - **Subtasks:**
-  - [ ] Implement `MarketDataProvider` port interface (`fetchQuote`, `fetchBatchQuotes`).
-  - [ ] Build `FinnhubMarketDataProvider` adapter using Spring `RestClient` with safe rate-limiting.
-  - [ ] Build `YahooFinanceMarketDataProvider` zero-config fallback adapter.
-  - [ ] Create `AssetQuoteEntity` and `AssetQuoteRepository` for PostgreSQL real-time snapshot caching.
-  - [ ] Build `ResilientMarketDataService` orchestrator with concurrent in-memory caching.
-  - [ ] Create `StockPriceUpdatedEvent` in `sharedkernel` domain events.
-  - [ ] Build `MarketDataSnapshotScheduler` (`@Scheduled` cron snapshots + dev interval).
-  - [ ] Publish `StockPriceUpdatedEvent` messages to Kafka topic `platform.marketdata.prices`.
-  - [ ] Create `MarketDataController` REST endpoints (`GET /api/v1/marketdata/quotes/{ticker}`, `GET /api/v1/marketdata/quotes`, `POST /api/v1/marketdata/refresh`).
-  - [ ] Connect Next.js frontend to display real stock prices, 24h delta %, and manual sync button.
+  - [x] Implement `MarketDataProvider` port interface (`fetchQuote`, `fetchBatchQuotes`).
+  - [x] Build `FinnhubMarketDataProvider` adapter using Spring `RestClient` with safe rate-limiting.
+  - [x] Build `YahooFinanceMarketDataProvider` zero-config fallback adapter.
+  - [x] Create `AssetQuoteEntity` and `AssetQuoteRepository` for PostgreSQL real-time snapshot caching.
+  - [x] Build `ResilientMarketDataService` orchestrator with concurrent in-memory caching.
+  - [x] Create `StockPriceUpdatedEvent` in `sharedkernel` domain events.
+  - [x] Build `MarketDataSnapshotScheduler` (`@Scheduled` cron snapshots + dev interval).
+  - [x] Publish `StockPriceUpdatedEvent` messages to Kafka topic `platform.marketdata.prices`.
+  - [x] Create `MarketDataController` REST endpoints (`GET /api/v1/marketdata/quotes/{ticker}`, `GET /api/v1/marketdata/quotes`, `POST /api/v1/marketdata/refresh`).
+  - [ ] Connect Next.js frontend to display real stock prices, 24h delta %, and manual sync button. (Frontend SSE integration remaining)
 
 ### TASK-018: Event Schema Design (Avro / JSON Schema)
 - **Priority:** 🟡 MEDIUM

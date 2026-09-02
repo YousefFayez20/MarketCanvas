@@ -1,6 +1,6 @@
 # Current State — MarketCanvas
 
-> **Last updated:** 2026-08-01
+> **Last updated:** 2026-08-15
 > **Updated by:** Senior Staff Engineer
 
 ## Current Branch
@@ -45,12 +45,17 @@
 | JPA AttributeConverters | ✅ | `UserIdConverter`, `AssetIdConverter` with `autoApply = true` |
 | Kafka Error Handling & DLQ | ✅ | `DefaultErrorHandler`, fixed backoff, direct routing to DLQ for `JacksonException` |
 | Topic Constants | ✅ | Centralized `KafkaTopics.java` used across producers and consumers |
+| Market Data Providers | ✅ | `FinnhubMarketDataProvider` + `YahooFinanceMarketDataProvider` with `@CircuitBreaker` and `@RateLimiter` |
+| Market Data Persistence | ✅ | `AssetQuoteEntity` & `AssetQuoteRepository` for PostgreSQL persistence |
+| Multi-Tier Cache Engine | ✅ | `MultiTierMarketDataCache` (L1 ConcurrentHashMap 90s, L2 Redis 5m) + graceful degradation |
+| Market Data Polling | ✅ | `AdaptiveMarketDataScheduler` polling 10 tickers per batch during NYSE hours |
+| SSE Broadcasting | ✅ | `MarketDataBroadcaster` & `GET /api/v1/assets/stream` endpoint |
 
 ## Work In Progress
 
 | Item | Status | Notes |
 |------|--------|-------|
-| TASK-017: Real Market Data Ingestion & Snapshot Producer | 🔄 In Progress | Implementing pluggable providers (Finnhub + Yahoo fallback), daily 2-3 snapshots scheduler, Kafka `platform.marketdata.prices` publishing, and Next.js live market integration |
+| TASK-017: Real Market Data Ingestion & Snapshot Producer | 🔄 Near Completion | Backend pipeline, multi-tier cache, and SSE broadcasting complete. Frontend SSE integration remaining. |
 
 ## Known Bugs
 
@@ -81,9 +86,11 @@
 | 2026-07-10 | Bug fixes: payload schema mismatch, WatchlistTest, deleted legacy listener, AssetId→UUID in events, merged config files |
 | 2026-07-12 | JPA Entity mapping, REST API, AttributeConverters, SecurityConfig, port fix (5432→5433), starter-kafka dependency, **End-to-End test PASSED** |
 | 2026-07-25 | Built Kafka Dead Letter Queue (DLQ), centralized `KafkaTopics` constants, implemented `DefaultErrorHandler` |
+| 2026-08-15 | Market Data Ingestion Pipeline (TASK-017), Multi-tier Cache, Redis, SSE Broadcasting |
 
 ## Infrastructure Notes
 
 - **PostgreSQL port:** Docker maps to `5433` (not `5432`) because a native Windows PostgreSQL installation occupies `5432`.
 - **Kafka dependency:** Must use `spring-boot-starter-kafka` (not raw `spring-kafka`) in Spring Boot 4.x for auto-configuration.
 - **PowerShell cURL:** Use `curl.exe` (not `curl`) on Windows PowerShell. Escape JSON with `\"`.
+- **Redis dependency:** Port 16379 mapped to 6379 in Docker. `spring-boot-starter-data-redis` requires `jackson-datatype-jsr310` for `JavaTimeModule` support during serialization.

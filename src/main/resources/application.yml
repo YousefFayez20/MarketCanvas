@@ -1,3 +1,18 @@
+marketdata:
+  finnhub:
+    api-key: ${FINNHUB_API_KEY:${marketdata.finnhub.api-key:}}
+  cache:
+    l1:
+      ttl-seconds: 90
+    l2:
+      ttl-seconds: 300
+  polling:
+    enabled: true
+    interval-ms: 12000
+    batch-size: 10
+  websocket:
+    enabled: ${FINNHUB_WS_ENABLED:false}
+
 spring:
   application:
     name: MarketCanvas
@@ -34,6 +49,23 @@ spring:
         format_sql: true
 
     open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      timeout: 2000ms
+      repositories:
+        enabled: false
+  ai:
+    model:
+      chat: google-genai
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:${SPRING_AI_GOOGLE_GENAI_API_KEY:dummy-key}}
+        chat:
+          options:
+            model: ${GEMINI_MODEL:gemini-flash-latest}
+            temperature: 0.3
 resilience4j:
   circuitbreaker:
     instances:
@@ -50,4 +82,5 @@ resilience4j:
         limit-for-period: 50
         limit-refresh-period: 60s
         timeout-duration: 500ms
+
 

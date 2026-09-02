@@ -43,11 +43,12 @@
 - [x] **Unified Multi-stage Docker Compose** (PostgreSQL, Kafka KRaft, Spring Boot backend, Next.js frontend)
 
 ### Month 3–4 Remaining: Advanced Kafka Infrastructure 🔄 IN PROGRESS
-- [ ] **Real Market Data Ingestion & Snapshot Producer** (TASK-017)
+- [x] **Real Market Data Ingestion & Snapshot Pipeline** (TASK-017)
   - Pluggable provider adapter: Finnhub.io (60 req/min) + Yahoo Finance fallback
-  - 2–3 daily high-fidelity snapshots (Market Open 09:35, Midday 13:00, Close 16:05 EST + manual trigger)
+  - Adaptive batch polling (10 tickers/batch) during NYSE hours
+  - Multi-tier cache (L1 ConcurrentHashMap, L2 Redis) with stampede protection
   - Ingest, cache in PostgreSQL (`asset_quotes`), and publish `StockPriceUpdatedEvent` to `platform.marketdata.prices`
-  - Next.js UI integration with real stock metrics and live sync trigger
+  - *Next.js UI SSE integration remaining*
 - [ ] **Event schema design with Avro / Schema Registry** (TASK-018)
 - [ ] **Set up Kafka Connect to archive events to S3 / MinIO** (TASK-019)
 
@@ -69,10 +70,10 @@
 ### Month 7–8: Distributed Systems & Reliability
 
 - [ ] Saga pattern for cross-context workflows
-- [ ] Resilience4j circuit breakers for external API calls
+- [x] Resilience4j circuit breakers for external API calls
 - [ ] Failure scenario simulation
 - [ ] Distributed tracing with OpenTelemetry
-- [ ] Redis integration for caching
+- [x] Redis integration for caching
 
 ---
 
@@ -114,8 +115,8 @@
 
 ## Stretch Goals
 
-- Real-time WebSocket price streaming
-- Bloomberg-lite terminal UI for power users
-- Natural language alert rules ("Alert me when any CEO sells >$1M")
-- Investment community features (shared watchlists, group journals)
-- API marketplace for developer integrations
+- [x] Real-time WebSocket / SSE price streaming
+- [ ] Bloomberg-lite terminal UI for power users
+- [ ] Natural language alert rules ("Alert me when any CEO sells >$1M")
+- [ ] Investment community features (shared watchlists, group journals)
+- [ ] API marketplace for developer integrations

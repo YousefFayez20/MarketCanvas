@@ -292,3 +292,25 @@
 
 **Next Step:** Ready for TASK-017 (Real Stock Market Data Ingestion with Finnhub/Yahoo fallback, 2–3 daily snapshot scheduler, and Kafka `platform.marketdata.prices` publishing).
 
+---
+
+## Session 8 — 2026-08-15
+
+**Summary:** Built the complete Market Data Ingestion Pipeline (TASK-017) backend with resilience, caching, and Server-Sent Events (SSE). 
+
+**Work Completed:**
+- Built `MultiTierMarketDataCache` with L1 ConcurrentHashMap (90s TTL) and L2 Redis (5m TTL) with graceful degradation
+- Configured Redis in `docker-compose.yml` (port 16379) and `application.yml`, with `RedisConfig` for JSON serialization (JSR310)
+- Implemented `AssetQuoteEntity` and `AssetQuoteRepository` for L3 PostgreSQL persistence
+- Built `ResilientMarketDataService` with a 3-tier lookup and CompletableFuture stampede protection (`inflightRequests`)
+- Built `MarketDataBroadcaster` using `CopyOnWriteArrayList<SseEmitter>` for live price updates
+- Exposed `GET /api/v1/assets/stream` SSE endpoint in `AssetController`
+- Built `AdaptiveMarketDataScheduler` (`@Scheduled(fixedDelay=12000)`) for batched NYSE hours polling (10 tickers/batch)
+- Built `FinnhubMarketDataProvider` and `YahooFinanceMarketDataProvider` protected by Resilience4j `@CircuitBreaker` and `@RateLimiter`
+
+**Key Decisions:**
+- Multi-tier cache-aside architecture for sub-millisecond reads and graceful degradation if Redis fails
+- SSE over WebSockets for one-way market data streaming to frontend
+- Stampede protection using `ConcurrentHashMap.computeIfAbsent` to prevent concurrent identical external API calls
+
+**Next Step:** Connect the Next.js frontend to the new SSE `/api/v1/assets/stream` endpoint for live price updates.

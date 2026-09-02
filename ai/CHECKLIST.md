@@ -120,5 +120,22 @@
 - [ ] Implement idempotency (`ProcessedEvent` table)
 - [ ] Use `@Transactional` to share transaction between idempotency check and business logic
 - [ ] Rely on `KafkaConsumerConfig` (`DefaultErrorHandler`) for retries and DLQ routing
-- [ ] Consider event schema evolution (forward/backward compatibility)
 - [ ] Update `/ai/ARCHITECTURE.md` (Kafka Topics section)
+
+---
+
+## Before Modifying Cache Layer
+
+- [ ] Ensure TTLs are configured and appropriate for the data volatility.
+- [ ] Implement graceful degradation (e.g., fallback to DB or L1 if Redis is down).
+- [ ] Use stampede protection (`computeIfAbsent`) for expensive queries.
+- [ ] Ensure serializability of cache payloads (e.g., Jackson JSR310 module for `Instant` or `LocalDateTime`).
+
+---
+
+## Before Creating SSE Endpoints
+
+- [ ] Use `SseEmitter` with appropriate timeouts.
+- [ ] Manage emitter lifecycle (onCompletion, onTimeout, onError) to avoid memory leaks.
+- [ ] Use thread-safe collections (e.g., `CopyOnWriteArrayList`) for the emitter registry.
+- [ ] Keep payload size minimal to reduce bandwidth over open connections.

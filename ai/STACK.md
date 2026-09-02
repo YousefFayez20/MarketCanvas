@@ -16,6 +16,9 @@
 | Spring Modulith | 2.1.0 | Module boundary support | Architectural enforcement, event externalization (future) |
 | Lombok | (managed by Boot) | Boilerplate reduction | `@Slf4j`, `@Getter`, `@RequiredArgsConstructor` |
 | Jackson 3.x | (managed by Boot) | JSON serialization | `tools.jackson.databind.ObjectMapper` (note: new namespace in Boot 4.x) |
+| Spring Data Redis | (managed by Boot) | Redis integration | `RedisTemplate` with Jackson serialization |
+| Resilience4j | 2.2.0 | Circuit breaker & Rate limiter | Protects Finnhub/Yahoo adapters from cascading failures |
+| Spring Web SSE | (managed by Boot) | Server-Sent Events | `SseEmitter` for unidirectional market data streaming |
 
 ## Data Stores
 
@@ -24,7 +27,7 @@
 | PostgreSQL | 16 | Primary relational database | ACID, pgvector extension, TimescaleDB extension |
 | pgvector | (planned) | Vector similarity search | RAG pipeline for AI Research Workspace |
 | TimescaleDB | (planned) | Time-series data | Price history, portfolio value over time |
-| Redis | (planned) | Caching, sessions | Rate limiting, computed views, session state |
+| Redis | 7-alpine | L2 Caching | Caching market data, graceful degradation, TTL management |
 
 ## Messaging
 
@@ -53,7 +56,6 @@
 | Technology | Phase | Purpose |
 |-----------|-------|---------|
 | Flyway | Phase 3 | Database migration management |
-| Resilience4j | Phase 2 | Circuit breakers for external APIs |
 | OpenTelemetry | Phase 3 | Distributed tracing |
 | Prometheus + Grafana | Phase 3 | Metrics and dashboards |
 | k6 | Phase 3 | Load testing |

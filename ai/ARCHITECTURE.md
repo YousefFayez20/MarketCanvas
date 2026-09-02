@@ -51,7 +51,7 @@ The platform evolves through three deliberate stages. **Never skip a stage.**
                 └───────────────────┘
 
 ┌─────────────────┐  ┌──────────────┐
-│  PostgreSQL 16  │  │ Redis (TBD)  │
+│  PostgreSQL 16  │  │ Redis 7      │
 │  (Primary DB)   │  │ (Cache)      │
 └─────────────────┘  └──────────────┘
 ```
@@ -91,9 +91,18 @@ src/main/java/org/workshop/marketcanvas/
     │   └── messaging/
     │       └── WatchlistEventConsumer.java   ← Kafka consumer (idempotent)
     └── infrastructure/
-        └── messaging/
-            ├── ProcessedEvent.java           ← Idempotency tracking entity
-            └── ProcessedEventRepository.java
+        ├── messaging/
+        │   ├── ProcessedEvent.java           ← Idempotency tracking entity
+        │   └── ProcessedEventRepository.java
+        ├── persistence/
+        │   ├── AssetQuoteEntity.java
+        │   ├── AssetQuoteRepository.java
+        │   └── cache/
+        │       ├── MultiTierMarketDataCache.java ← L1 + L2 cache
+        │       └── RedisConfig.java
+        ├── scheduling/
+        │   └── AdaptiveMarketDataScheduler.java  ← Batched NYSE polling
+        └── MarketDataBroadcaster.java            ← SSE emitter registry
 ```
 
 ## Module Boundaries (Enforced)
@@ -154,16 +163,15 @@ Rule: MarketData → may only access → SharedKernel
 | `platform.marketdata.prices` | `ticker` (e.g., AAPL) | 30 days | MarketDataSnapshotScheduler / ResilientMarketDataService | WatchlistValuationConsumer, S3 Archive, Read Caches |
 | `platform.marketdata.snapshots` | `snapshotId` | 30 days | MarketDataSnapshotScheduler | Ops, Audit & AI Ingestion Pipelines |
 
-## Market Data Ingestion Pipeline (2-3 Snapshots/Day)
+## Market Data Ingestion Pipeline
 
 ```
-1. MarketDataSnapshotScheduler triggers via Cron (09:35, 13:00, 16:05 EST) or manual POST /api/v1/marketdata/refresh
-2. ResilientMarketDataProvider queries Finnhub.io (or Yahoo Finance fallback if no token)
-3. Quotes are normalized into StockQuote domain records
-4. Persisted into asset_quotes and asset_price_history tables
-5. StockPriceUpdatedEvent published to Kafka topic: platform.marketdata.prices
-6. In-memory read cache updated for sub-millisecond REST queries
-7. Downstream consumers update portfolio valuations and event archives
+1. AdaptiveMarketDataScheduler polls 10 tickers/batch during NYSE hours (09:30-16:00 EST).
+2. ResilientMarketDataService fetches data using MultiTierMarketDataCache (L1 ConcurrentHashMap 90s TTL, L2 Redis 5m TTL).
+3. Cache miss invokes FinnhubMarketDataProvider (or Yahoo fallback) protected by Resilience4j @CircuitBreaker and @RateLimiter. CompletableFuture stampede protection prevents duplicate in-flight requests.
+4. Quotes are persisted to asset_quotes table via AssetQuoteRepository.
+5. StockPriceUpdatedEvent is published to platform.marketdata.prices Kafka topic.
+6. MarketDataBroadcaster streams updates to connected Next.js clients via Server-Sent Events (SSE).
 ```
 
 ## REST API Endpoints
@@ -198,4 +206,5 @@ Rule: MarketData → may only access → SharedKernel
 
 **Local development only.** Docker Compose with:
 - Kafka (Bitnami, KRaft mode) on port 9092
-- PostgreSQL 16 on port 5432
+- PostgreSQL 16 on port 5433
+- Redis 7 (Alpine) on port 16379
