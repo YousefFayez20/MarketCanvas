@@ -1,6 +1,6 @@
 marketdata:
   finnhub:
-    api-key: ${FINNHUB_API_KEY:${marketdata.finnhub.api-key:}}
+    api-key: ${FINNHUB_API_KEY:}
   cache:
     l1:
       ttl-seconds: 90
