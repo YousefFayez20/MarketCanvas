@@ -29,7 +29,7 @@ public class AiAnalysisService {
     public Flux<String> analyzeStream(String question, List<String> tickers){
         String context = marketContextBuilder.buildContext(tickers);
         String systemPrompt = loadPromptTemplate().replace("{context}",context);
-        return chatClient.prompt().system(systemPrompt).user(question).user(question).stream().content();
+        return chatClient.prompt().system(systemPrompt).user(question).stream().content();
     }
     private String loadPromptTemplate(){
         try(var inputStream = promptTemplate.getInputStream()){

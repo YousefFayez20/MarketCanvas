@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserSwitcher } from "@/components/user/UserSwitcher";
 import { EndpointTesterDrawer } from "@/components/api-inspector/EndpointTesterDrawer";
+import { ChatPanel } from "@/components/ai/ChatPanel";
 import { useUser } from "@/context/UserContext";
 import {
   TrendingUp,
@@ -13,12 +14,14 @@ import {
   Terminal,
   Activity,
   Zap,
+  Sparkles,
 } from "lucide-react";
 
 export function Navbar() {
   const pathname = usePathname();
   const { isBackendConnected } = useUser();
   const [isTesterOpen, setIsTesterOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const navLinks = [
     { name: "Watchlists", href: "/", icon: Layers },
@@ -94,6 +97,20 @@ export function Navbar() {
               </span>
             </div>
 
+            {/* AI Analyst Trigger Button */}
+            <button
+              onClick={() => setIsChatOpen((prev) => !prev)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                isChatOpen
+                  ? "bg-canvas-card border-brand-cyan/50 text-brand-cyan shadow-sm"
+                  : "bg-canvas-subtle border-canvas-border hover:border-brand-cyan/50 text-canvas-muted hover:text-brand-cyan"
+              }`}
+              title="Toggle AI Market Analyst"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+              <span className="hidden sm:inline">AI Analyst</span>
+            </button>
+
             {/* API Test Bench Trigger Button */}
             <button
               onClick={() => setIsTesterOpen(true)}
@@ -110,11 +127,17 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Drawer */}
+      {/* Drawers */}
       <EndpointTesterDrawer
         isOpen={isTesterOpen}
         onClose={() => setIsTesterOpen(false)}
       />
+
+      <ChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </>
   );
 }
+

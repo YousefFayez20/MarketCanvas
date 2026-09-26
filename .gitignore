@@ -32,3 +32,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend ###
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+node_modules/
+*.tsbuildinfo
+

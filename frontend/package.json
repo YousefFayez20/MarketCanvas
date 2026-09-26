@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node -e \"if (process.platform === 'win32' && require('fs').existsSync('scripts/patch-next-windows.js')) require('./scripts/patch-next-windows.js')\"",
+    "prebuild": "node -e \"if (process.platform === 'win32' && require('fs').existsSync('scripts/patch-next-windows.js')) require('./scripts/patch-next-windows.js')\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

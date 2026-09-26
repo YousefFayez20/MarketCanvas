@@ -5,6 +5,8 @@ import {
   MockUser,
   WatchlistResponse,
   StockQuote,
+  AnalysisRequest,
+  AnalysisResponse,
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -147,6 +149,14 @@ export async function addAssetToWatchlist(watchlistId: string, assetId: string):
 export async function removeAssetFromWatchlist(watchlistId: string, assetId: string): Promise<void> {
   await request<void>(`/api/v1/watchlists/${watchlistId}/assets/${assetId}`, {
     method: "DELETE",
+  });
+}
+
+// 5. AI Analysis
+export async function analyzeStock(payload: AnalysisRequest): Promise<AnalysisResponse> {
+  return request<AnalysisResponse>("/api/v1/ai/chat", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

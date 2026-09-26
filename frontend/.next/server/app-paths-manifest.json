@@ -1,3 +1,6 @@
 {
-  "/assets/page": "app/assets/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/watchlists/[id]/page": "app/watchlists/[id]/page.js",
+  "/assets/page": "app/assets/page.js",
+  "/page": "app/page.js"
 }

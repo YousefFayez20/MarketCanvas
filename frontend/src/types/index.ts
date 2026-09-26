@@ -57,3 +57,26 @@ export interface StockQuote {
   lastUpdated: string;
   providerSource: string;
 }
+
+export interface AnalysisRequest {
+  question: string;
+  tickers: string[];
+}
+
+export interface AnalysisResponse {
+  ticker: string;
+  summary: string;
+  sentiment: "BULLISH" | "BEARISH" | "NEUTRAL";
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  keyPoints: string[];
+  metricsObserved: string[];
+  disclaimer: string;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+}
+

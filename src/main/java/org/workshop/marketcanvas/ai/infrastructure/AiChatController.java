@@ -53,36 +53,45 @@ public class AiChatController {
         }
     }
 
-        @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-        public SseEmitter stream (@RequestBody AnalysisRequest request){
-           SseEmitter emitter = new SseEmitter(120_000L);
-           Flux<String> tokens = aiAnalysisService.analyzeStream(request.question(),request.tickers());
-           tokens.subscribe(
-                   token ->{
-                       try{
-                           emitter.send(SseEmitter.event().name("token").data(token));
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(
+            @RequestBody AnalysisRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Connection", "keep-alive");
 
-                       } catch (IOException e) {
-                           emitter.completeWithError(e);
-                       }
-
-                   },
-                   error ->{
-                       try {
-                           emitter.send(SseEmitter.event().name("error").data(error.getMessage()));
-                       } catch (IOException e) {
-                           emitter.completeWithError(e);
-                       }
-                   },
-                   () ->{
-                       try {
-                           emitter.send(SseEmitter.event().name("done").data("[DONE]"));
-                       } catch (IOException ignored) {}
-                       emitter.complete();
-                   }
-           );
-           return emitter;
-        }
+        SseEmitter emitter = new SseEmitter(120_000L);
+        emitter.onTimeout(() -> log.warn("AI stream timed out"));
+        emitter.onError(e -> log.warn("AI stream error: {}", e.getMessage()));
+        Flux<String> tokens = aiAnalysisService.analyzeStream(request.question(), request.tickers());
+        tokens.subscribe(
+                token -> {
+                    try {
+                        emitter.send(SseEmitter.event().name("token").data(token));
+                        response.flushBuffer();
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                },
+                error -> {
+                    try {
+                        emitter.send(SseEmitter.event().name("error").data(error.getMessage()));
+                        response.flushBuffer();
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                },
+                () -> {
+                    try {
+                        emitter.send(SseEmitter.event().name("done").data("[DONE]"));
+                        response.flushBuffer();
+                    } catch (IOException ignored) {}
+                    emitter.complete();
+                }
+        );
+        return emitter;
+    }
 
     }
 
