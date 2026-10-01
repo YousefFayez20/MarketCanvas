@@ -3,16 +3,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { AssetInfo, WatchlistResponse } from "@/types";
+import { AssetInfo, WatchlistResponse, WatchlistAnalysis } from "@/types";
 import {
   getWatchlist,
   getAssetById,
   getAllAssets,
   removeAssetFromWatchlist,
   deleteWatchlist,
+  analyzeWatchlist,
 } from "@/lib/api";
 import { AssetTable } from "@/components/watchlist/AssetTable";
 import { AssetSearchModal } from "@/components/watchlist/AssetSearchModal";
+import { WatchlistAiCard } from "@/components/watchlist/WatchlistAiCard";
 import {
   ArrowLeft,
   PlusCircle,
@@ -34,6 +36,9 @@ export default function WatchlistDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<WatchlistAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -115,6 +120,23 @@ export default function WatchlistDetailPage() {
     }
   };
 
+  const handleAnalyzeWatchlist = async () => {
+    if (!watchlist || isAnalyzing) return;
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const result = await analyzeWatchlist(watchlist.id);
+      setAiAnalysis(result);
+    } catch (err: any) {
+      console.error("Failed to run AI portfolio analysis", err);
+      setAnalysisError(
+        err.message || "Failed to analyze portfolio. Ensure backend AI service is running."
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-canvas-dim space-y-3">
@@ -193,6 +215,25 @@ export default function WatchlistDetailPage() {
               <span>Delete</span>
             </button>
 
+            {/* Analyze with AI Button */}
+            <button
+              onClick={handleAnalyzeWatchlist}
+              disabled={isAnalyzing || assetCount === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-cyan/20 via-brand-purple/20 to-brand-cyan/20 hover:from-brand-cyan/30 hover:to-brand-purple/30 text-brand-cyan border border-brand-cyan/40 text-xs font-bold transition-all shadow-md shadow-cyan-950/20 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={
+                assetCount === 0
+                  ? "Add assets to run portfolio health audit"
+                  : "Run AI Portfolio Health Audit"
+              }
+            >
+              {isAnalyzing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-cyan" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+              )}
+              <span>{isAnalyzing ? "Auditing Portfolio..." : "Analyze with AI"}</span>
+            </button>
+
             <button
               onClick={() => setIsSearchOpen(true)}
               disabled={isFull}
@@ -225,6 +266,32 @@ export default function WatchlistDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Error alert if analysis fails */}
+      {analysisError && (
+        <div className="p-4 rounded-xl bg-brand-redDim/30 border border-brand-red/30 text-brand-red text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{analysisError}</span>
+          </div>
+          <button
+            onClick={() => setAnalysisError(null)}
+            className="text-xs text-brand-red hover:underline font-semibold ml-4"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* AI Portfolio Health Audit Card */}
+      {aiAnalysis && (
+        <WatchlistAiCard
+          analysis={aiAnalysis}
+          onRefresh={handleAnalyzeWatchlist}
+          isRefreshing={isAnalyzing}
+          onClose={() => setAiAnalysis(null)}
+        />
+      )}
 
       {/* Assets Table */}
       <div className="space-y-3">

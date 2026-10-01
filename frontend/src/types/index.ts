@@ -80,3 +80,13 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+export interface WatchlistAnalysis {
+  healthScore: number;
+  diversificationRating: "CONCENTRATED" | "MODERATE" | "WELL_BALANCED";
+  sectorBreakdown: Record<string, number>;
+  topRisks: string[];
+  recommendations: string[];
+  executiveSummary: string;
+  disclaimer: string;
+}
+

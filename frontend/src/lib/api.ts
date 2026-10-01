@@ -7,6 +7,7 @@ import {
   StockQuote,
   AnalysisRequest,
   AnalysisResponse,
+  WatchlistAnalysis,
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -157,6 +158,12 @@ export async function analyzeStock(payload: AnalysisRequest): Promise<AnalysisRe
   return request<AnalysisResponse>("/api/v1/ai/chat", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function analyzeWatchlist(watchlistId: string): Promise<WatchlistAnalysis> {
+  return request<WatchlistAnalysis>(`/api/v1/ai/watchlists/${watchlistId}/analyze`, {
+    method: "POST",
   });
 }
 
